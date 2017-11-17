@@ -1,0 +1,27 @@
+---
+- apt: 
+    name: curl
+  hecome: true
+- shell: curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+  args:
+    creates: /etc/apt/sources.list.d/nodesource.list
+- apt:
+    name: "{{ item }}"
+    update_cache: true
+  with_items:
+    - screen
+    - git
+    - curl
+    - nodejs
+  become: true
+- apt:
+    name: nginx
+  notify:
+  - start nginx
+- name: remove default nginx configuration
+  become: true
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify:
+  - restart nginx

@@ -1,0 +1,14 @@
+[Unit]
+Description=Markov Mutagen Backend Service
+After=network.target
+
+[Service]
+Environment=BERKELEYDB_DIR=/user
+KillMode=none
+ExecStart=/home/{{ created_user }}/markov-mutagen/server/venv/bin/python3.6 runserver.py
+Restart=on-failure
+WorkingDirectory=/home/{{ created_user }}/markov-mutagen/server/
+
+[Install]
+WantedBy=multi-user.target
+

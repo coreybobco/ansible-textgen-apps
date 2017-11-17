@@ -1,0 +1,65 @@
+---
+- apt:
+    name: libdb5.3-dev
+  become: true
+- name: git clone into Markov Mutagen repo
+  git:
+    repo: https://github.com/coreybobco/markov-mutagen.git
+    dest: ~/markov-mutagen/
+- pip:
+    name: "{{ item }}"
+    virtualenv: ~/markov-mutagen/server/venv
+    virtualenv_python: python3.6
+  with_items:
+    - Flask
+    - internetarchive
+    - gutenberg
+    - capturer
+    - markovify
+- name: copy markovmutagen.net nginx configuration
+  copy:
+    src: markovmutagen.net
+    dest: /etc/nginx/sites-enabled/markovmutagen.net
+  become: true
+  notify:
+    - restart nginx
+- npm:
+    name: "{{ item }}"
+    global: yes
+  with_items:
+    - grunt
+    - bower
+  become: true
+- npm:
+    path: ~/markov-mutagen/
+- bower:
+    path: ~/markov-mutagen/
+- name: add markovmutagen-frontend service daemon
+  template:
+    src: markovmutagen-frontend.service.j2
+    dest: /etc/systemd/system/markovmutagen-frontend.service
+  become: true
+- systemd:
+    enabled: yes
+    name: markovmutagen-frontend
+    state: started
+  become: true
+  notify:
+    - restart nginx
+- name: add markovmutagen-backend service daemon
+  template:
+    src: markovmutagen-backend.service.j2
+    dest: /etc/systemd/system/markovmutagen-backend.service
+  notify:
+    - restart markovmutagen-backend
+  become: true
+- name: populate the gutenberg cache so the app will run (takes a couple hours)
+  shell: ./venv/bin/python3.6 mutagen/update_cache.py
+  args: 
+    chdir: /home/{{ created_user }}/markov-mutagen/server/
+    creates: /home/{{ created_user }}/gutenberg_data/metadata/metadata.db
+- systemd:
+    enabled: yes
+    name: markovmutagen-backend
+    state: started
+  become: true

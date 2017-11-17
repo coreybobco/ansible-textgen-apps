@@ -1,0 +1,12 @@
+- name: restart nginx
+  become: true
+  service:
+    name: nginx
+    state: restarted
+- name: restart markovmutagen-backend
+  systemd:
+    daemon-reload: yes
+    enabled: yes
+    name: markovmutagen-backend
+    state: restarted
+  become: true
